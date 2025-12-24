@@ -6,7 +6,7 @@ const app = express();
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
-
+import roomRoutes from "./routes/roomRoutes.js";
 const PORT = 3000;
 app.use(cors());
 app.use(express.json());
@@ -17,7 +17,7 @@ app.get("/", (req, res) => {
 app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/courses", courseRoutes);
-
+app.use("/rooms", roomRoutes);
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 });
