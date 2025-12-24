@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoomStatusType {
+  FREE
+  OCCUPIED
+  MAINTENANCE
+  RESCHEDULED
+}
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  ASSISTANT_ADMIN
+  STUDENT
+}
+
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(255)
+  email         String   @unique @db.VarChar(255)
+  passwordHash String   @db.VarChar(255)
+  role      UserRole @default(STUDENT)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  roomStatuses RoomStatus[] @relation("RoomStatusUpdater")
+}
+
+
+model Room {
+  id          String   @id @default(uuid()) @db.Uuid
+  room_number String   @db.VarChar(10)
+  room_type   String   @db.VarChar(20)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  routines     Routine[]
+  roomStatuses RoomStatus[]
+}
+
+model Course {
+  id          String   @id @default(uuid()) @db.Uuid
+  course_code String   @unique @db.VarChar(20)
+  course_name String   @db.VarChar(100)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  routines Routine[]
+}
+
+
+model Section {
+  id           String   @id @default(uuid()) @db.Uuid
+  section_name String   @unique @db.VarChar(10)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  routines Routine[]
+}
+
+model Routine {
+  id         String   @id @default(uuid()) @db.Uuid
+  day        String   @db.VarChar(10)   
+  start_time String   @db.VarChar(5)    
+  end_time   String   @db.VarChar(5)   
+  class_type String   @db.VarChar(20)  
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  teacher     String   @db.VarChar(20)  
+  course_id  String @db.Uuid
+  section_id String @db.Uuid
+  room_id    String @db.Uuid
+
+  
+  course  Course @relation(fields: [course_id], references: [id])
+  section Section @relation(fields: [section_id], references: [id])
+  room    Room    @relation(fields: [room_id], references: [id])
+
+  roomStatuses RoomStatus[]
+
+  @@unique([day, start_time, end_time, room_id])
+}
+
+model RoomStatus {
+  id         String          @id @default(uuid()) @db.Uuid
+  status      RoomStatusType
+  status_date DateTime       @db.Date
+  updated_at DateTime        @default(now())
+
+  routine_id String @db.Uuid
+  room_id    String @db.Uuid
+  updated_by String @db.Uuid
+
+  routine   Routine @relation(fields: [routine_id], references: [id])
+  room      Room    @relation(fields: [room_id], references: [id])
+  updatedBy User    @relation("RoomStatusUpdater", fields: [updated_by], references: [id])
+}
