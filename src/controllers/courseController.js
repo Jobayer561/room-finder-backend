@@ -25,8 +25,6 @@ export const createCourse = async (req, res) => {
     });
   }
 
-
-
   const course = await prisma.course.create({
     data: {
       course_code: data.course_code,
@@ -69,7 +67,6 @@ export const updateCourse = async (req, res) => {
     });
   }
 
-
   const updatedCourse = await prisma.course.update({
     where: { id: courseId },
     data: {
@@ -105,7 +102,6 @@ export const deleteCourse = async (req, res) => {
       data: z.flattenError(error),
     });
   }
-
 
   const deletedCourse = await prisma.course.delete({
     where: { id: courseId },

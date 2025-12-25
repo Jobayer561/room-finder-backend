@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { getCurrentUser, userSignIn, userSignUp } from "../controllers/authController.js";
-import { authMiddleWare } from "../middleware/auth.js";
-
+import {
+  syncFirebaseUser,
+  getAllUsers,
+} from "../controllers/authController.js";
 
 const router = Router();
 
-router.post("/sign-up", userSignUp);
-router.post("/sign-in", userSignIn);
-router.get("/me", authMiddleWare, getCurrentUser);
+router.post("/sync-firebase-user", syncFirebaseUser);
+router.get("/users", getAllUsers);
+
 export default router;

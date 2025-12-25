@@ -1,12 +1,26 @@
 -- CreateEnum
 CREATE TYPE "RoomStatusType" AS ENUM ('FREE', 'OCCUPIED', 'MAINTENANCE', 'RESCHEDULED');
 
+-- CreateEnum
+CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'TEACHER', 'ASSISTANT_ADMIN', 'STUDENT');
+
+-- CreateTable
+CREATE TABLE "User" (
+    "id" VARCHAR(255) NOT NULL,
+    "name" VARCHAR(255) NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
+    "role" "UserRole" NOT NULL DEFAULT 'STUDENT',
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateTable
 CREATE TABLE "Room" (
     "id" UUID NOT NULL,
     "room_number" VARCHAR(10) NOT NULL,
     "room_type" VARCHAR(20) NOT NULL,
-    "building" VARCHAR(5) NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -41,9 +55,9 @@ CREATE TABLE "Routine" (
     "start_time" VARCHAR(5) NOT NULL,
     "end_time" VARCHAR(5) NOT NULL,
     "class_type" VARCHAR(20) NOT NULL,
-    "teacher" VARCHAR(20) NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "teacher" VARCHAR(20) NOT NULL,
     "course_id" UUID NOT NULL,
     "section_id" UUID NOT NULL,
     "room_id" UUID NOT NULL,
@@ -55,13 +69,17 @@ CREATE TABLE "Routine" (
 CREATE TABLE "RoomStatus" (
     "id" UUID NOT NULL,
     "status" "RoomStatusType" NOT NULL,
+    "status_date" DATE NOT NULL,
     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "routine_id" UUID NOT NULL,
     "room_id" UUID NOT NULL,
-    "updated_by" UUID NOT NULL,
+    "updated_by" VARCHAR(255) NOT NULL,
 
     CONSTRAINT "RoomStatus_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Course_course_code_key" ON "Course"("course_code");

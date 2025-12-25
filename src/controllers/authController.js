@@ -1,73 +1,85 @@
+import admin from "../middleware/firebaseAdmin.js";
 import { prisma } from "../database/prisma.js";
-import { z } from "zod";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-export const userSignUp = async (req, res) => {
-  const userCreateSchema = z.object({
-    name: z.string().min(3),
-    email: z.email(),
-    password: z.string().min(6),
-  });
 
-  const { success, data, error } = userCreateSchema.safeParse(req.body);
-  if (!success) {
-    return res.status(400).json({ error: error.errors });
+export const syncFirebaseUser = async (req, res) => {
+  try {
+    console.log("Request received:", req.body);
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "idToken is required" });
+    }
+
+    console.log("Verifying token...");
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    console.log("Decoded token:", decoded);
+    const { uid, email, name } = decoded;
+
+    if (!email) {
+      return res.status(400).json({
+        status: "error",
+        message:
+          "Email claim missing in token. Use a provider that provides email.",
+      });
+    }
+
+    const displayName = name || email.split("@")[0];
+
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: { name: displayName },
+      create: {
+        id: uid,
+        email,
+        name: displayName,
+        role: "STUDENT",
+      },
+    });
+
+    const created = user.created_at === user.updated_at;
+
+    return res.status(created ? 201 : 200).json({
+      status: "success",
+      message: created
+        ? "User created and synced successfully"
+        : "User synced successfully",
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+        },
+      },
+    });
+  } catch (err) {
+    console.error("syncFirebaseUser error:", err);
+    const code = err.code === "auth/argument-error" ? 401 : 500;
+    return res.status(code).json({
+      status: "error",
+      message: err.message || "Failed to sync user",
+    });
   }
-  const passwordHash = await bcrypt.hash(data.password, 10);
-  const user = {
-    name: data.name,
-    email: data.email,
-    passwordHash,
-  };
-  const createdUser = await prisma.user.create({ data: user });
-  res.status(201).json({ user: createdUser });
 };
-export const userSignIn = async (req, res) => {
-  const userSignInSchema = z.object({
-    email: z.email(),
-    password: z.string().min(6),
-  });
-  const { success, data, error } = userSignInSchema.safeParse(req.body);
-  if (!success) {
-    return res
-      .status(400)
-      .json({ message: "Validation failed", data: z.flattenError(error) });
-  }
 
-  const user = await prisma.user.findUnique({
-    where: {
-      email: data.email,
+export const getAllUsers = async (req, res) => {
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      created_at: true,
+      updated_at: true,
     },
   });
-  if (!user) {
-    return res.status(404).json({ status: "error", message: "User not found" });
-  }
-  const isPasswordValid = await bcrypt.compare(
-    data.password,
-    user.passwordHash
-  );
-  if (!isPasswordValid) {
-    return res
-      .status(401)
-      .json({ status: "error", message: "Invalid Password" });
-  }
 
-  const secretKey = process.env.JWT_SECRET_KEY;
-  const accessToken = jwt.sign({ sub: user.id }, secretKey, {
-    expiresIn: "7d",
-  });
   res.json({
     status: "success",
-    message: "User signed in successfully",
-    data: { accessToken },
-  });
-};
-
-export const getCurrentUser = async (req, res) => {
-  const user = req.user;
-  res.json({
-    status: "success",
-    message: "User Fetched Successfully",
-    data: { user },
+    data: { users, count: users.length },
+    message: "Users fetched successfully",
   });
 };

@@ -29,11 +29,10 @@ enum UserRole {
 
 
 model User {
-  id            String   @id @default(uuid()) @db.Uuid
-  name      String   @db.VarChar(255)
+  id            String   @id @db.VarChar(255)
+  name          String   @db.VarChar(255)
   email         String   @unique @db.VarChar(255)
-  passwordHash String   @db.VarChar(255)
-  role      UserRole @default(STUDENT)
+  role          UserRole @default(STUDENT)
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
@@ -105,7 +104,7 @@ model RoomStatus {
 
   routine_id String @db.Uuid
   room_id    String @db.Uuid
-  updated_by String @db.Uuid
+  updated_by String @db.VarChar(255)
 
   routine   Routine @relation(fields: [routine_id], references: [id])
   room      Room    @relation(fields: [room_id], references: [id])
