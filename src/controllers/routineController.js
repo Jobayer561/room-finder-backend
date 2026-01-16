@@ -1,8 +1,19 @@
 import { prisma } from "../database/prisma.js";
 import { z } from "zod";
 
-export const getAllRoutines = async (req, res) => {
+export const getRoutines = async (req, res) => {
+  const { room_id, teacher, section_id, section, room, room_number } =
+    req.query;
+
+  const where = {};
+  if (room_id) where.room_id = room_id;
+  if (teacher) where.teacher = teacher;
+  if (section_id) where.section_id = section_id;
+  if (section) where.section = { section_name: section };
+  if (room || room_number) where.room = { room_number: room || room_number };
+
   const routines = await prisma.routine.findMany({
+    where,
     select: {
       id: true,
       day: true,
@@ -14,18 +25,22 @@ export const getAllRoutines = async (req, res) => {
       updated_at: true,
       course: {
         select: {
+          id: true,
           course_code: true,
           course_name: true,
         },
       },
       section: {
         select: {
+          id: true,
           section_name: true,
         },
       },
       room: {
         select: {
+          id: true,
           room_number: true,
+          room_type: true,
         },
       },
     },
@@ -128,17 +143,20 @@ export const createRoutine = async (req, res) => {
       updated_at: true,
       course: {
         select: {
+          id: true,
           course_code: true,
           course_name: true,
         },
       },
       section: {
         select: {
+          id: true,
           section_name: true,
         },
       },
       room: {
         select: {
+          id: true,
           room_number: true,
         },
       },
@@ -272,17 +290,20 @@ export const updateRoutine = async (req, res) => {
       updated_at: true,
       course: {
         select: {
+          id: true,
           course_code: true,
           course_name: true,
         },
       },
       section: {
         select: {
+          id: true,
           section_name: true,
         },
       },
       room: {
         select: {
+          id: true,
           room_number: true,
         },
       },
@@ -336,107 +357,5 @@ export const deleteRoutine = async (req, res) => {
     status: "success",
     data: { routine: deletedRoutine },
     message: "Routine deleted successfully",
-  });
-};
-
-export const getRoutinesByDay = async (req, res) => {
-  const day = req.params.day;
-
-  if (!day) {
-    return res.status(400).json({
-      status: "error",
-      message: "Day parameter is required",
-    });
-  }
-
-  const routines = await prisma.routine.findMany({
-    where: {
-      day: {
-        equals: day,
-        mode: "insensitive",
-      },
-    },
-    select: {
-      id: true,
-      day: true,
-      start_time: true,
-      end_time: true,
-      class_type: true,
-      teacher: true,
-      course: {
-        select: {
-          course_code: true,
-          course_name: true,
-        },
-      },
-      section: {
-        select: {
-          section_name: true,
-        },
-      },
-      room: {
-        select: {
-          room_number: true,
-        },
-      },
-    },
-    orderBy: [{ start_time: "asc" }, { room: { room_number: "asc" } }],
-  });
-
-  res.json({
-    status: "success",
-    data: { routines, count: routines.length },
-    message: `Routines for ${day} fetched successfully`,
-  });
-};
-
-export const getRoutinesByTeacher = async (req, res) => {
-  const teacher = req.params.teacher;
-
-  if (!teacher) {
-    return res.status(400).json({
-      status: "error",
-      message: "Teacher parameter is required",
-    });
-  }
-
-  const routines = await prisma.routine.findMany({
-    where: {
-      teacher: {
-        contains: teacher,
-        mode: "insensitive",
-      },
-    },
-    select: {
-      id: true,
-      day: true,
-      start_time: true,
-      end_time: true,
-      class_type: true,
-      teacher: true,
-      course: {
-        select: {
-          course_code: true,
-          course_name: true,
-        },
-      },
-      section: {
-        select: {
-          section_name: true,
-        },
-      },
-      room: {
-        select: {
-          room_number: true,
-        },
-      },
-    },
-    orderBy: [{ day: "asc" }, { start_time: "asc" }],
-  });
-
-  res.json({
-    status: "success",
-    data: { routines, count: routines.length },
-    message: `Routines for teacher "${teacher}" fetched successfully`,
   });
 };

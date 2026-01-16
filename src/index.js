@@ -7,6 +7,7 @@ import courseRoutes from "./routes/courseRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
 import sectionRoutes from "./routes/sectionRoutes.js";
 import routineRoutes from "./routes/routineRoutes.js";
+import roomStatusRoutes from './routes/RoomStatusRoutes.js'
 const PORT = 3000;
 app.use(cors());
 app.use(express.json());
@@ -19,6 +20,7 @@ app.use("/courses", courseRoutes);
 app.use("/rooms", roomRoutes);
 app.use("/sections", sectionRoutes);
 app.use("/routines", routineRoutes);
+app.use('/roomStatuses',roomStatusRoutes)
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 });

@@ -4,7 +4,7 @@ import { prisma } from "../database/prisma.js";
 export const syncFirebaseUser = async (req, res) => {
   try {
     console.log("Request received:", req.body);
-    const { idToken } = req.body;
+    const { idToken, displayName: providedName } = req.body;
     if (!idToken) {
       return res
         .status(400)
@@ -24,7 +24,7 @@ export const syncFirebaseUser = async (req, res) => {
       });
     }
 
-    const displayName = name || email.split("@")[0];
+    const displayName = providedName || name || email.split("@")[0];
 
     const user = await prisma.user.upsert({
       where: { email },

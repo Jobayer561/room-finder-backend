@@ -102,11 +102,14 @@ model RoomStatus {
   status_date DateTime       @db.Date
   updated_at DateTime        @default(now())
 
-  routine_id String @db.Uuid
+  routine_id  String?  @db.Uuid @map("routine_id")
   room_id    String @db.Uuid
   updated_by String @db.VarChar(255)
+  
+  day_of_week String? @db.VarChar(10) 
+  is_recurring Boolean @default(false)
 
-  routine   Routine @relation(fields: [routine_id], references: [id])
+  routine   Routine? @relation(fields: [routine_id], references: [id])
   room      Room    @relation(fields: [room_id], references: [id])
   updatedBy User    @relation("RoomStatusUpdater", fields: [updated_by], references: [id])
 }

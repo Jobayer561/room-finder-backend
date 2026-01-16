@@ -159,8 +159,6 @@ export const updateRoom = async (req, res) => {
     });
   }
 
-
-
   const updatedRoom = await prisma.room.update({
     where: { id: roomId },
     data: {

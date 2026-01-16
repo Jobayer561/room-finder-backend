@@ -1,6 +1,6 @@
 import Router from "express";
 import {
-  getAllRoutines,
+  getRoutines,
   createRoutine,
   updateRoutine,
   deleteRoutine,
@@ -8,7 +8,7 @@ import {
 
 const router = Router();
 
-router.get("/", getAllRoutines);
+router.get("/", getRoutines);
 router.post("/", createRoutine);
 router.patch("/:id", updateRoutine);
 router.delete("/:id", deleteRoutine);
