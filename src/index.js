@@ -3,6 +3,7 @@ import cors from "cors";
 
 const app = express();
 import authRoutes from "./routes/authRoutes.js";
+import { getUserRole } from "./controllers/authController.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js";
 import sectionRoutes from "./routes/sectionRoutes.js";
@@ -14,6 +15,9 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Hello, World!");
 });
+
+// Root-level route for frontend compatibility
+app.get("/user/role", getUserRole);
 
 app.use("/auth", authRoutes);
 app.use("/courses", courseRoutes);

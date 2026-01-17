@@ -10,6 +10,10 @@ export const getAllRoomStatuses = async (req, res) => {
         status: true,
         status_date: true,
         updated_at: true,
+        start_time: true,
+        end_time: true,
+         day_of_week: true, 
+        is_recurring: true,   
         routine_id: true,
         room: {
           select: {
@@ -30,6 +34,7 @@ export const getAllRoomStatuses = async (req, res) => {
       },
     });
 
+    
     const routineIds = statuses
       .filter((s) => s.routine_id)
       .map((s) => s.routine_id);
@@ -88,7 +93,9 @@ const createRoomStatusSchema = z.object({
   room_id: z.string().uuid(),
   updated_by: z.string().max(255),
   day_of_week: z.string().max(10).optional(), 
-  is_recurring: z.boolean().optional(), 
+  is_recurring: z.boolean().optional(),
+  start_time: z.string().max(5).optional(),
+  end_time: z.string().max(5).optional(),
 });
 
 export const createRoomStatus = async (req, res) => {
@@ -99,11 +106,7 @@ export const createRoomStatus = async (req, res) => {
       return res.status(400).json({ message: "Validation failed", error });
     }
 
-    if (data.status !== "FREE" && !data.routine_id) {
-      return res.status(400).json({
-        message: "routine_id is required for non-FREE status",
-      });
-    }
+  
 
     let routine = null;
     if (data.routine_id) {
@@ -115,11 +118,7 @@ export const createRoomStatus = async (req, res) => {
         return res.status(404).json({ message: "Routine not found" });
       }
 
-      if (routine.room_id !== data.room_id) {
-        return res.status(400).json({
-          message: "Routine does not belong to selected room",
-        });
-      }
+     
     }
 
     const [room, user] = await Promise.all([
@@ -140,6 +139,8 @@ export const createRoomStatus = async (req, res) => {
       status: true,
       status_date: true,
       updated_at: true,
+      start_time: true,
+      end_time: true,
       day_of_week: true, 
       is_recurring: true,
       room: {
@@ -185,12 +186,12 @@ export const createRoomStatus = async (req, res) => {
     const createData = {
       status: data.status,
       status_date: data.status_date,
-      room_id: data.room_id,
-      updated_by: data.updated_by,
+      room: { connect: { id: data.room_id } },
+      updatedBy: { connect: { id: data.updated_by } },
     };
 
     if (data.routine_id) {
-      createData.routine_id = data.routine_id;
+      createData.routine = { connect: { id: data.routine_id } };
     }
 
     if (data.day_of_week !== undefined) {
@@ -198,6 +199,12 @@ export const createRoomStatus = async (req, res) => {
     }
     if (data.is_recurring !== undefined) {
       createData.is_recurring = data.is_recurring;
+    }
+    if (data.start_time !== undefined) {
+      createData.start_time = data.start_time;
+    }
+    if (data.end_time !== undefined) {
+      createData.end_time = data.end_time;
     }
 
     const roomStatus = await prisma.roomStatus.create({
@@ -229,6 +236,8 @@ export const updateRoomStatus = async (req, res) => {
     updated_by: z.string().max(255).optional(),
     day_of_week: z.string().max(10).optional(),
     is_recurring: z.boolean().optional(),
+    start_time: z.string().max(5).optional(),
+    end_time: z.string().max(5).optional(),
   });
 
   const { success, data, error } = updateSchema.safeParse(req.body);
@@ -265,14 +274,8 @@ export const updateRoomStatus = async (req, res) => {
           message: "Routine not found",
         });
       }
-
-      const targetRoomId = data.room_id || statusExists.room_id;
-      if (routine.room_id !== targetRoomId) {
-        return res.status(400).json({
-          status: "error",
-          message: "Routine is not scheduled for the specified room",
-        });
-      }
+      
+ 
     }
 
     if (data.room_id) {
@@ -307,10 +310,10 @@ export const updateRoomStatus = async (req, res) => {
     if (data.routine_id) updateData.routine_id = data.routine_id;
     if (data.room_id) updateData.room_id = data.room_id;
     if (data.updated_by) updateData.updated_by = data.updated_by;
-    if (data.day_of_week !== undefined)
-      updateData.day_of_week = data.day_of_week;
-    if (data.is_recurring !== undefined)
-      updateData.is_recurring = data.is_recurring;
+    if (data.day_of_week !== undefined) updateData.day_of_week = data.day_of_week;
+    if (data.is_recurring !== undefined) updateData.is_recurring = data.is_recurring;
+    if (data.start_time !== undefined) updateData.start_time = data.start_time;
+    if (data.end_time !== undefined) updateData.end_time = data.end_time;
     updateData.updated_at = new Date();
 
     const updatedStatus = await prisma.roomStatus.update({
@@ -321,6 +324,8 @@ export const updateRoomStatus = async (req, res) => {
         status: true,
         status_date: true,
         updated_at: true,
+        start_time: true,
+        end_time: true,
         day_of_week: true,
         is_recurring: true,
         room: {
@@ -373,7 +378,6 @@ export const updateRoomStatus = async (req, res) => {
     });
   }
 };
-
 export const deleteRoomStatus = async (req, res) => {
   const statusId = req.params.id;
 

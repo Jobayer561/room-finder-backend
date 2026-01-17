@@ -102,6 +102,9 @@ model RoomStatus {
   status_date DateTime       @db.Date
   updated_at DateTime        @default(now())
 
+  start_time  String?         @db.VarChar(5) 
+  end_time    String?         @db.VarChar(5)  
+
   routine_id  String?  @db.Uuid @map("routine_id")
   room_id    String @db.Uuid
   updated_by String @db.VarChar(255)

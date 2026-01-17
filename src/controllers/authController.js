@@ -83,3 +83,90 @@ export const getAllUsers = async (req, res) => {
     message: "Users fetched successfully",
   });
 };
+
+export const getUserRole = async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({
+        status: "error",
+        message: "Email is required",
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { role: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    return res.json({
+      status: "success",
+      role: user.role,
+    });
+  } catch (error) {
+    console.error("getUserRole error:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to fetch user role",
+    });
+  }
+};
+
+export const updateUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    const validRoles = ["ADMIN", "ASSISTANT_ADMIN", "TEACHER", "STUDENT"];
+
+    if (!role || !validRoles.includes(role)) {
+      return res.status(400).json({
+        status: "error",
+        message: `Invalid role. Must be one of: ${validRoles.join(", ")}`,
+      });
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: { role },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        updated_at: true,
+      },
+    });
+
+    return res.json({
+      status: "success",
+      message: "User role updated successfully",
+      data: { user: updatedUser },
+    });
+  } catch (error) {
+    console.error("updateUserRole error:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to update user role",
+    });
+  }
+};
